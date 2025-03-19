@@ -11,7 +11,7 @@ import uni.fmi.masters.talkify.service.api.UserApi
 class NetworkModule {
 
     @Provides
-    fun provideApiService(): UserApi {
+    fun provideUserApi(): UserApi {
         return ApiClient.create(UserApi::class.java)
     }
 }
