@@ -6,5 +6,8 @@ data class ChannelSearchCriteria(
     val ownerId: String,
     val adminId: String,
     val guestId: String,
-    val active: Boolean
+    val active: Boolean,
+    val page: Number,
+    val size: Number,
+    val sort: String
 )

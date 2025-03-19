@@ -7,5 +7,8 @@ data class UserSearchCriteria (
     val inChannelId: String,
     val notInChannelId: String,
     val onlyFriends: Boolean,
-    val active: Boolean
+    val active: Boolean,
+    val page: Number,
+    val size: Number,
+    val sort: String
 )
