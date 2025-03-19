@@ -19,6 +19,13 @@ interface UserApi {
         const val BASE_URL = "/api/v1/users"
     }
 
+    @POST("/login")
+    suspend fun login(@Query("username") username: String,
+                      @Query("password") password: String): Response<Void>
+
+    @POST("/logout")
+    suspend fun logout(): Response<Void>
+
     @POST(BASE_URL)
     suspend fun create(@Body request: UserCreateRequest): Response<User>
 
