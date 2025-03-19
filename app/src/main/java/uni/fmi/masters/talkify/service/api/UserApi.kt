@@ -35,7 +35,7 @@ interface UserApi {
     @GET("$BASE_URL/current")
     suspend fun getCurrent(): Response<User>
 
-    @GET("$BASE_URL")
+    @GET(BASE_URL)
     suspend fun getAllByCriteria(@Query("search") search: String,
                                  @Query("username") username: String,
                                  @Query("email") email: String,
