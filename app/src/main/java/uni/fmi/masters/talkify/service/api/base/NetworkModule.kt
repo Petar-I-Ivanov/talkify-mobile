@@ -6,6 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import uni.fmi.masters.talkify.service.api.ChannelApi
 import uni.fmi.masters.talkify.service.api.ChannelMemberApi
+import uni.fmi.masters.talkify.service.api.FriendshipApi
 import uni.fmi.masters.talkify.service.api.MessageApi
 import uni.fmi.masters.talkify.service.api.UserApi
 
@@ -31,5 +32,10 @@ class NetworkModule {
     @Provides
     fun provideChannelMemberApi(): ChannelMemberApi {
         return ApiClient.create(ChannelMemberApi::class.java)
+    }
+
+    @Provides
+    fun provideFriendshipApi(): FriendshipApi {
+        return ApiClient.create(FriendshipApi::class.java)
     }
 }
