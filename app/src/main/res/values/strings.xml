@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Talkify</string>
+    <string name="common_username">Username</string>
+    <string name="common_password">Password</string>
+    <string name="login">Login</string>
+    <string name="login_required_error">Username and password fields are required!</string>
+    <string name="login_non_existing_error">Did not find user with provided credentials!</string>
 </resources>
