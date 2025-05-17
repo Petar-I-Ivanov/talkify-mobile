@@ -1,13 +1,13 @@
-<androidx.drawerlayout.widget.DrawerLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/drawerLayout"
+    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
+    android:orientation="vertical"
     tools:context=".activity.TalkifyActivity">
 
-    <!-- Main Content -->
+    <!-- ScrollView with Fixed 300dp Height -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="300dp">
@@ -15,32 +15,29 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal" >
+            android:orientation="horizontal">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/friendsRecyclerView"
                 android:layout_width="200dp"
                 android:layout_height="300dp"
-                android:layout_weight="1"
-                android:scrollbars="vertical">
-
-            </androidx.recyclerview.widget.RecyclerView>
+                android:scrollbars="vertical" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/groupChatsRecyclerView"
                 android:layout_width="200dp"
                 android:layout_height="300dp"
-                android:layout_weight="1"
                 android:scrollbars="vertical" />
         </LinearLayout>
     </ScrollView>
 
+    <!-- RelativeLayout Below the ScrollView -->
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <!-- Chat User Interface -->
-
         <LinearLayout
             android:id="@+id/chatContainer"
             android:layout_width="match_parent"
@@ -48,20 +45,16 @@
             android:orientation="vertical"
             android:padding="8dp">
 
-            <!-- Chat Header -->
-
             <!-- Messages RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/messagesRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:scrollbars="vertical"
+                tools:listitem="@layout/item_message" />
 
             <!-- Message Input -->
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/chatRecyclerView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:overScrollMode="always" />
-
             <LinearLayout
                 android:id="@+id/messageInputContainer"
                 android:layout_width="match_parent"
@@ -82,12 +75,6 @@
                     android:layout_height="wrap_content"
                     android:text="Send" />
             </LinearLayout>
-
-            <!-- Toggle Drawer Button -->
-
         </LinearLayout>
     </RelativeLayout>
-
-    <!-- Drawer Content -->
-
-</androidx.drawerlayout.widget.DrawerLayout>
+</LinearLayout>

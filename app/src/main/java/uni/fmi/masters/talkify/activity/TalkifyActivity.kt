@@ -3,21 +3,27 @@ package uni.fmi.masters.talkify.activity
 import android.os.Bundle
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uni.fmi.masters.talkify.R
 import uni.fmi.masters.talkify.model.channel.Channel
+import uni.fmi.masters.talkify.model.message.Message
 import uni.fmi.masters.talkify.model.user.User
 import uni.fmi.masters.talkify.service.adapters.FriendsAdapter
 import uni.fmi.masters.talkify.service.adapters.GroupChatsAdapter
+import uni.fmi.masters.talkify.service.adapters.MessageAdapter
 import uni.fmi.masters.talkify.service.api.ChannelApi
+import uni.fmi.masters.talkify.service.api.MessageApi
 import uni.fmi.masters.talkify.service.api.UserApi
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -25,12 +31,15 @@ class TalkifyActivity : AppCompatActivity() {
 
     @Inject lateinit var userApi: UserApi
     @Inject lateinit var channelApi: ChannelApi
+    @Inject lateinit var messageApi: MessageApi
 
     private lateinit var friendsRecyclerView: RecyclerView
     private lateinit var groupChatsRecyclerView: RecyclerView
+    private lateinit var messagesRecyclerView: RecyclerView
 
     private val friendsAdapter by lazy { FriendsAdapter(emptyList()) { onUserSelected(it) } }
     private val groupChatsAdapter by lazy { GroupChatsAdapter(emptyList()) { onChannelSelected(it) } }
+    private val messageAdapter by lazy { MessageAdapter(emptyList()) }
 
     private var selectedChannelId: String? = null
 
@@ -41,18 +50,22 @@ class TalkifyActivity : AppCompatActivity() {
         // Initialize RecyclerViews
         friendsRecyclerView = findViewById(R.id.friendsRecyclerView)
         groupChatsRecyclerView = findViewById(R.id.groupChatsRecyclerView)
+        messagesRecyclerView = findViewById(R.id.messagesRecyclerView)
 
         // Set LayoutManagers
         friendsRecyclerView.layoutManager = LinearLayoutManager(this)
         groupChatsRecyclerView.layoutManager = LinearLayoutManager(this)
+        messagesRecyclerView.layoutManager = LinearLayoutManager(this)
 
         friendsRecyclerView.adapter = friendsAdapter
         groupChatsRecyclerView.adapter = groupChatsAdapter
+        messagesRecyclerView.adapter = messageAdapter
 
         // Fetch and display data for users and channels
         lifecycleScope.launch {
-            loadUsers();
-            loadChannels();
+            loadUsers()
+            loadChannels()
+            loadMessages(selectedChannelId)
         }
     }
 
@@ -117,11 +130,44 @@ class TalkifyActivity : AppCompatActivity() {
         }
     }
 
+    private fun loadMessages(channelId: String?) {
+        if (channelId.isNullOrBlank()) {
+            // No channelId, display fallback message
+            messageAdapter.updateMessages(
+                listOf(Message(id = "", text = "Please select chat", sender = "", sentAt = "", editedAt = "", _links = mapOf()))
+            )
+        } else {
+            // Fetch messages using channelId
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val response = messageApi.getAllByCriteria(channelId, 0, 20, "sentAt,asc")
+                    if (response.isSuccessful) {
+                        val messages = response.body()?._embedded?.get("messages") ?: emptyList()
+                        runOnUiThread {
+                            messageAdapter.updateMessages(messages)
+                        }
+                    } else {
+                        runOnUiThread {
+                            Toast.makeText(this@TalkifyActivity, "Failed to load messages", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        Toast.makeText(this@TalkifyActivity, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+
     private fun onUserSelected(user: User) {
         selectedChannelId = user.privateChannelId
+        loadMessages(user.privateChannelId)
     }
 
     private fun onChannelSelected(channel: Channel) {
         selectedChannelId = channel.id
+        loadMessages(channel.id)
     }
 }
