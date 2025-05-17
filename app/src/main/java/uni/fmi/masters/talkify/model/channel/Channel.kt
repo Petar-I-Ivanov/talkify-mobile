@@ -5,5 +5,5 @@ import uni.fmi.masters.talkify.model.common.Link
 data class Channel(
     val id: String,
     val name: String,
-    val links: Map<String, Link>
+    val _links: Map<String, Link>
 )

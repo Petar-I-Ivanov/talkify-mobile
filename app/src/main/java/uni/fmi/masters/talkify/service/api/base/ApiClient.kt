@@ -11,11 +11,11 @@ object ApiClient {
     private val cookieManager = CookieManager()
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("http://localhost:8080")
+        .baseUrl("https://9c7b-5-53-198-14.ngrok-free.app")
         .client(OkHttpClient.Builder()
-            .cookieJar(cookieManager)
+            .cookieJar(cookieManager) // Use custom CookieManager
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
+                level = HttpLoggingInterceptor.Level.BODY // Logs request and response details
             })
             .build())
         .addConverterFactory(GsonConverterFactory.create())
@@ -26,7 +26,7 @@ object ApiClient {
     }
 
     fun isUserLoggedIn(): Boolean {
-        return cookieManager.getCookiesForHost("localhost")
+        return cookieManager.getCookiesForHost("9c7b-5-53-198-14.ngrok-free.app")
             .any { cookie -> cookie.name == "JSESSIONID" }
     }
 }

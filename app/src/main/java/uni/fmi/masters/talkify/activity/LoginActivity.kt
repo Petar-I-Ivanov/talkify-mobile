@@ -5,16 +5,21 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.textfield.TextInputLayout
+import com.google.android.material.textfield.TextInputEditText
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import uni.fmi.masters.talkify.R
 import uni.fmi.masters.talkify.service.api.UserApi
+import uni.fmi.masters.talkify.service.api.base.ApiClient
+import javax.inject.Inject
 
-class LoginActivity(private val userApi: UserApi) : AppCompatActivity() {
+@AndroidEntryPoint
+class LoginActivity : AppCompatActivity() {
 
+    @Inject lateinit var userApi: UserApi
     private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,21 +31,22 @@ class LoginActivity(private val userApi: UserApi) : AppCompatActivity() {
     }
 
     private fun onLogin() {
-        val username = findViewById<TextInputLayout>(R.id.username_input).editText?.text.toString()
-        val password = findViewById<TextInputLayout>(R.id.password_input).editText?.text.toString()
+        val username = findViewById<TextInputEditText>(R.id.username_input).text.toString()
+        val password = findViewById<TextInputEditText>(R.id.password_input).text.toString()
 
         if (username.isBlank() || password.isBlank()) {
             findViewById<TextView>(R.id.login_error).text = getString(R.string.login_required_error)
             return
         }
 
-        try {
-            coroutineScope.launch {
+        coroutineScope.launch {
+            try {
                 userApi.login(username, password)
+                startActivity(Intent(this@LoginActivity, TalkifyActivity::class.java))
+                finish()
+            } catch (e: Exception) {
+                findViewById<TextView>(R.id.login_error).text = getString(R.string.login_non_existing_error)
             }
-            startActivity(Intent(this, TalkifyActivity::class.java))
-        } catch (e: Exception) {
-            findViewById<TextView>(R.id.login_error).text = getString(R.string.login_non_existing_error)
         }
     }
 }

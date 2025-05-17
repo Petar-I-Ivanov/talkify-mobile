@@ -1,11 +1,13 @@
 package uni.fmi.masters.talkify.activity
 
 import android.os.Bundle
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -16,26 +18,36 @@ import uni.fmi.masters.talkify.service.adapters.FriendsAdapter
 import uni.fmi.masters.talkify.service.adapters.GroupChatsAdapter
 import uni.fmi.masters.talkify.service.api.ChannelApi
 import uni.fmi.masters.talkify.service.api.UserApi
+import javax.inject.Inject
 
-class TalkifyActivity(
-    private val userApi: UserApi,
-    private val channelApi: ChannelApi)
-    : AppCompatActivity() {
+@AndroidEntryPoint
+class TalkifyActivity : AppCompatActivity() {
+
+    @Inject lateinit var userApi: UserApi
+    @Inject lateinit var channelApi: ChannelApi
 
     private lateinit var friendsRecyclerView: RecyclerView
     private lateinit var groupChatsRecyclerView: RecyclerView
+
+    private val friendsAdapter by lazy { FriendsAdapter(emptyList()) { onUserSelected(it) } }
+    private val groupChatsAdapter by lazy { GroupChatsAdapter(emptyList()) { onChannelSelected(it) } }
+
+    private var selectedChannelId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_talkify)
 
         // Initialize RecyclerViews
-        friendsRecyclerView = findViewById(R.id.friendsFragmentContainer)
-        groupChatsRecyclerView = findViewById(R.id.groupChatsFragmentContainer)
+        friendsRecyclerView = findViewById(R.id.friendsRecyclerView)
+        groupChatsRecyclerView = findViewById(R.id.groupChatsRecyclerView)
 
         // Set LayoutManagers
         friendsRecyclerView.layoutManager = LinearLayoutManager(this)
         groupChatsRecyclerView.layoutManager = LinearLayoutManager(this)
+
+        friendsRecyclerView.adapter = friendsAdapter
+        groupChatsRecyclerView.adapter = groupChatsAdapter
 
         // Fetch and display data for users and channels
         lifecycleScope.launch {
@@ -62,7 +74,7 @@ class TalkifyActivity(
             }
 
             if (response.isSuccessful) {
-                val users = response.body()?.embedded?.get("users") ?: emptyList()
+                val users = response.body()?._embedded?.get("users") ?: emptyList()
                 val adapter = FriendsAdapter(users) { user ->
                     onUserSelected(user)
                 }
@@ -92,7 +104,7 @@ class TalkifyActivity(
             }
 
             if (response.isSuccessful) {
-                val channels = response.body()?.embedded?.get("channels") ?: emptyList()
+                val channels = response.body()?._embedded?.get("channels") ?: emptyList()
                 val adapter = GroupChatsAdapter(channels) { channel ->
                     onChannelSelected(channel)
                 }
@@ -106,15 +118,10 @@ class TalkifyActivity(
     }
 
     private fun onUserSelected(user: User) {
-        // Show chat UI for the selected user
-        // Update the chat header, load messages, etc.
-        findViewById<TextView>(R.id.chatHeader).text = "Chat with ${user.username}"
+        selectedChannelId = user.privateChannelId
     }
 
     private fun onChannelSelected(channel: Channel) {
-        // Show chat UI for the selected channel
-        // Update the chat header, load messages, etc.
-        findViewById<TextView>(R.id.chatHeader).text = "Channel: ${channel.name}"
+        selectedChannelId = channel.id
     }
-
 }

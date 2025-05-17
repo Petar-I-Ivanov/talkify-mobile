@@ -9,5 +9,5 @@ data class Message(
     val sender: String,
     val sentAt: LocalDateTime,
     val editedAt: LocalDateTime,
-    val links: Map<String, Link>
+    val _links: Map<String, Link>
 )

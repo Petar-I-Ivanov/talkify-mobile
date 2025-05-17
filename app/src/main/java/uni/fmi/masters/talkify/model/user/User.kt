@@ -7,5 +7,5 @@ data class User(
     val username: String,
     val email: String,
     val privateChannelId: String,
-    val links: Map<String, Link>
+    val _links: Map<String, Link>
 )
