@@ -1,8 +1,8 @@
 package uni.fmi.masters.talkify.activity
 
 import android.os.Bundle
-import android.widget.FrameLayout
-import android.widget.TextView
+import android.widget.Button
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import uni.fmi.masters.talkify.R
 import uni.fmi.masters.talkify.model.channel.Channel
 import uni.fmi.masters.talkify.model.message.Message
+import uni.fmi.masters.talkify.model.message.MessageCreateRequest
 import uni.fmi.masters.talkify.model.user.User
 import uni.fmi.masters.talkify.service.adapters.FriendsAdapter
 import uni.fmi.masters.talkify.service.adapters.GroupChatsAdapter
@@ -23,7 +24,6 @@ import uni.fmi.masters.talkify.service.adapters.MessageAdapter
 import uni.fmi.masters.talkify.service.api.ChannelApi
 import uni.fmi.masters.talkify.service.api.MessageApi
 import uni.fmi.masters.talkify.service.api.UserApi
-import java.time.LocalDateTime
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -46,6 +46,7 @@ class TalkifyActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_talkify)
+        findViewById<Button>(R.id.sendButton).setOnClickListener { sendMessage() }
 
         // Initialize RecyclerViews
         friendsRecyclerView = findViewById(R.id.friendsRecyclerView)
@@ -65,7 +66,21 @@ class TalkifyActivity : AppCompatActivity() {
         lifecycleScope.launch {
             loadUsers()
             loadChannels()
-            loadMessages(selectedChannelId)
+        }
+    }
+
+    private fun sendMessage() {
+        val message = findViewById<EditText>(R.id.messageInput).text.toString()
+        if (message.isNotBlank()) {
+            lifecycleScope.launch {
+                try {
+                    val test = messageApi.create(MessageCreateRequest(message, selectedChannelId!!))
+                    findViewById<EditText>(R.id.messageInput).text.clear()
+                    loadMessages(selectedChannelId)
+                } catch (e: Exception) {
+                    // TODO
+                }
+            }
         }
     }
 
@@ -140,11 +155,12 @@ class TalkifyActivity : AppCompatActivity() {
             // Fetch messages using channelId
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val response = messageApi.getAllByCriteria(channelId, 0, 20, "sentAt,asc")
+                    val response = messageApi.getAllByCriteria(channelId, 0, 1000, "sentAt,asc")
                     if (response.isSuccessful) {
                         val messages = response.body()?._embedded?.get("messages") ?: emptyList()
                         runOnUiThread {
                             messageAdapter.updateMessages(messages)
+                            messagesRecyclerView.scrollToPosition(messagesRecyclerView.adapter!!.itemCount - 1)
                         }
                     } else {
                         runOnUiThread {
@@ -159,7 +175,6 @@ class TalkifyActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun onUserSelected(user: User) {
         selectedChannelId = user.privateChannelId

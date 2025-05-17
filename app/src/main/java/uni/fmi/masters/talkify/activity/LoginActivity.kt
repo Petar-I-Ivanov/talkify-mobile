@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import uni.fmi.masters.talkify.R
+import uni.fmi.masters.talkify.service.api.CsrfApi
 import uni.fmi.masters.talkify.service.api.UserApi
 import uni.fmi.masters.talkify.service.api.base.ApiClient
 import javax.inject.Inject
@@ -20,6 +21,8 @@ import javax.inject.Inject
 class LoginActivity : AppCompatActivity() {
 
     @Inject lateinit var userApi: UserApi
+    @Inject lateinit var csrfApi: CsrfApi
+
     private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,6 +45,7 @@ class LoginActivity : AppCompatActivity() {
         coroutineScope.launch {
             try {
                 userApi.login(username, password)
+                csrfApi.loadCsrf()
                 startActivity(Intent(this@LoginActivity, TalkifyActivity::class.java))
                 finish()
             } catch (e: Exception) {
