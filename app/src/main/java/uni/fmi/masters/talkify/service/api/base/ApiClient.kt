@@ -8,12 +8,14 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
 
+    private const val BASE_URL = "https://9c7b-5-53-198-14.ngrok-free.app"
     private val cookieManager = CookieManager()
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://9c7b-5-53-198-14.ngrok-free.app")
+        .baseUrl(BASE_URL)
         .client(OkHttpClient.Builder()
             .cookieJar(cookieManager) // Use custom CookieManager
+            .addInterceptor(CsrfInterceptor(cookieManager))
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY // Logs request and response details
             })
@@ -26,7 +28,7 @@ object ApiClient {
     }
 
     fun isUserLoggedIn(): Boolean {
-        return cookieManager.getCookiesForHost("9c7b-5-53-198-14.ngrok-free.app")
+        return cookieManager.getCookiesForHost(BASE_URL.replace("https://", ""))
             .any { cookie -> cookie.name == "JSESSIONID" }
     }
 }
