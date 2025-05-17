@@ -5,4 +5,6 @@
     <string name="login">Login</string>
     <string name="login_required_error">Username and password fields are required!</string>
     <string name="login_non_existing_error">Did not find user with provided credentials!</string>
+    <string name="open">Open</string>
+    <string name="close">Close</string>
 </resources>
