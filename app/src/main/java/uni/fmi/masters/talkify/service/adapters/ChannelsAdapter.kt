@@ -64,6 +64,15 @@ class GroupChatsAdapter(
             val popup = PopupMenu(view.context, view)
             popup.menuInflater.inflate(R.menu.channel_item_menu, popup.menu)
 
+            popup.menu.findItem(R.id.action_rename)?.isVisible =
+                channel._links["update"]?.href?.isNotBlank() == true
+
+            popup.menu.findItem(R.id.action_delete)?.isVisible =
+                channel._links["delete"]?.href?.isNotBlank() == true
+
+            popup.menu.findItem(R.id.action_add_member)?.isVisible =
+                channel._links["addMember"]?.href?.isNotBlank() == true
+
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.action_rename -> {

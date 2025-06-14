@@ -57,9 +57,9 @@ class TalkifyActivity : AppCompatActivity() {
         emptyList(),
         selectedChannelId,
         onClick = { channel -> onChannelSelected(channel) },
-        onRename = { channel -> onChannelSelected(channel) },
-        onDelete = { channel -> onChannelSelected(channel) },
-        onAddMember = { channel -> onChannelSelected(channel) }) }
+        onRename = { channel -> onChannelUpdate(channel) },
+        onDelete = { channel -> onChannelDelete(channel) },
+        onAddMember = { channel -> onAddMember(channel) }) }
     private val messageAdapter by lazy { MessageAdapter(emptyList(), currentUser) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -160,9 +160,9 @@ class TalkifyActivity : AppCompatActivity() {
                 val channels = response.body()?._embedded?.get("channels") ?: emptyList()
                 val adapter = GroupChatsAdapter(channels, selectedChannelId,
                     onClick = { channel -> onChannelSelected(channel) },
-                    onRename = { channel -> onChannelSelected(channel) },
-                    onDelete = { channel -> onChannelSelected(channel) },
-                    onAddMember = { channel -> onChannelSelected(channel) })
+                    onRename = { channel -> onChannelUpdate(channel) },
+                    onDelete = { channel -> onChannelDelete(channel) },
+                    onAddMember = { channel -> onAddMember(channel) })
                 groupChatsRecyclerView.adapter = adapter
             } else {
                 // Handle failure (e.g., show a message)
@@ -323,5 +323,64 @@ class TalkifyActivity : AppCompatActivity() {
             friendshipApi.removeFriend(user.id)
             loadUsers()
         }
+    }
+
+    private fun onChannelUpdate(channel: Channel) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_create_channel, null)
+        val inputField = dialogView.findViewById<EditText>(R.id.channelNameInput)
+        inputField.setText(channel.name)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Rename Channel")
+            .setView(dialogView)
+            .setPositiveButton("Rename") { _, _ ->
+                val channelName = inputField.text.toString().trim()
+                if (channelName.isNotEmpty()) {
+                    lifecycleScope.launch {
+                        if (channelApi.update(channel.id, ChannelCreateUpdateRequest(channelName)).code() == 200) {
+                            loadChannels()
+                            Toast.makeText(
+                                this@TalkifyActivity,
+                                "Channel renamed!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                this@TalkifyActivity,
+                                "Channel with this name already exists!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                } else {
+                    Toast.makeText(this, "Channel name can't be empty.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.show()
+    }
+
+    private fun onChannelDelete(channel: Channel) {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Delete channel")
+            .setMessage("Do you want to delete '${channel.name}'?")
+            .setPositiveButton("Yes") { dialog, _ ->
+                lifecycleScope.launch {
+                    channelApi.delete(channel.id)
+                    loadChannels()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+    }
+
+    private fun onAddMember(channel: Channel) {
+
     }
 }
