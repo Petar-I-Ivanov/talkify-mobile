@@ -49,7 +49,13 @@ class TalkifyActivity : AppCompatActivity() {
     private lateinit var messagesRecyclerView: RecyclerView
 
     private val friendsAdapter by lazy { FriendsAdapter(emptyList(), selectedChannelId) { onUserSelected(it) } }
-    private val groupChatsAdapter by lazy { GroupChatsAdapter(emptyList(), selectedChannelId) { onChannelSelected(it) } }
+    private val groupChatsAdapter by lazy { GroupChatsAdapter(
+        emptyList(),
+        selectedChannelId,
+        onClick = { channel -> onChannelSelected(channel) },
+        onRename = { channel -> onChannelSelected(channel) },
+        onDelete = { channel -> onChannelSelected(channel) },
+        onAddMember = { channel -> onChannelSelected(channel) }) }
     private val messageAdapter by lazy { MessageAdapter(emptyList(), currentUser) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -146,9 +152,11 @@ class TalkifyActivity : AppCompatActivity() {
 
             if (response.isSuccessful) {
                 val channels = response.body()?._embedded?.get("channels") ?: emptyList()
-                val adapter = GroupChatsAdapter(channels, selectedChannelId) { channel ->
-                    onChannelSelected(channel)
-                }
+                val adapter = GroupChatsAdapter(channels, selectedChannelId,
+                    onClick = { channel -> onChannelSelected(channel) },
+                    onRename = { channel -> onChannelSelected(channel) },
+                    onDelete = { channel -> onChannelSelected(channel) },
+                    onAddMember = { channel -> onChannelSelected(channel) })
                 groupChatsRecyclerView.adapter = adapter
             } else {
                 // Handle failure (e.g., show a message)
