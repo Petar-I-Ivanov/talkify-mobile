@@ -49,7 +49,7 @@ interface UserApi {
                                  @Query("inChannelId") inChannelId: String,
                                  @Query("notInChannelId") notInChannelId: String,
                                  @Query("onlyFriends") onlyFriends: Boolean,
-                                 @Query("active") active: Boolean,
+                                 @Query("active") active: Boolean?,
                                  @Query("page") page: Number,
                                  @Query("size") size: Number,
                                  @Query("sort") sort: String): Response<PagedModel<User>>

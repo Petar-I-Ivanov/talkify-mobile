@@ -1,6 +1,7 @@
 package uni.fmi.masters.talkify.activity
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -25,7 +26,9 @@ import uni.fmi.masters.talkify.model.user.User
 import uni.fmi.masters.talkify.service.adapters.FriendsAdapter
 import uni.fmi.masters.talkify.service.adapters.GroupChatsAdapter
 import uni.fmi.masters.talkify.service.adapters.MessageAdapter
+import uni.fmi.masters.talkify.service.adapters.UserSearchAdapter
 import uni.fmi.masters.talkify.service.api.ChannelApi
+import uni.fmi.masters.talkify.service.api.FriendshipApi
 import uni.fmi.masters.talkify.service.api.MessageApi
 import uni.fmi.masters.talkify.service.api.UserApi
 import javax.inject.Inject
@@ -39,6 +42,7 @@ class TalkifyActivity : AppCompatActivity() {
     @Inject lateinit var userApi: UserApi
     @Inject lateinit var channelApi: ChannelApi
     @Inject lateinit var messageApi: MessageApi
+    @Inject lateinit var friendshipApi: FriendshipApi
 
     private lateinit var friendsRecyclerView: RecyclerView
     private lateinit var groupChatsRecyclerView: RecyclerView
@@ -53,6 +57,7 @@ class TalkifyActivity : AppCompatActivity() {
         setContentView(R.layout.activity_talkify)
         findViewById<Button>(R.id.sendButton).setOnClickListener { sendMessage() }
         loadChannelCreateBtn()
+        loadUsersSearchBtn()
 
         // Initialize RecyclerViews
         friendsRecyclerView = findViewById(R.id.friendsRecyclerView)
@@ -208,7 +213,7 @@ class TalkifyActivity : AppCompatActivity() {
                     val channelName = inputField.text.toString().trim()
                     if (channelName.isNotEmpty()) {
                         lifecycleScope.launch {
-                            if (channelApi.create(ChannelCreateUpdateRequest(channelName)).body()?.id != null) {
+                            if (channelApi.create(ChannelCreateUpdateRequest(channelName)).code() == 201) {
                                 loadChannels()
                                 Toast.makeText(
                                     this@TalkifyActivity,
@@ -229,6 +234,71 @@ class TalkifyActivity : AppCompatActivity() {
                 }
                 .setNegativeButton("Cancel", null)
                 .create()
+
+            dialog.show()
+        }
+    }
+
+    private fun loadUsersSearchBtn() {
+        val searchUserBtn = findViewById<Button>(R.id.searchBtn)
+        searchUserBtn.setOnClickListener {
+            val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_user_search, null)
+            val dialog = AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setTitle("Search Users")
+                .setNegativeButton("Cancel", null)
+                .create()
+
+            val searchInput = dialogView.findViewById<EditText>(R.id.searchInput)
+            val recyclerView = dialogView.findViewById<RecyclerView>(R.id.userRecyclerView)
+
+            val adapter = UserSearchAdapter(emptyList()) { user ->
+                lifecycleScope.launch {
+                    if (friendshipApi.addFriend(user.id).code() == 201) {
+                        Toast.makeText(this@TalkifyActivity, "Added ${user.username} as friend", Toast.LENGTH_SHORT).show()
+                        loadUsers()
+                        dialog.cancel()
+                    }
+                }
+            }
+
+            lifecycleScope.launch {
+                val users = userApi.getAllByCriteria(
+                    search = "",
+                    username = "",
+                    email = "",
+                    inChannelId = "",
+                    notInChannelId = "",
+                    onlyFriends = false,
+                    active = null,
+                    page = 0,
+                    size = 20,
+                    sort = "username"
+                ).body()?._embedded?.get("users")?.filter { user -> !user._links["addFriend"]?.href.isNullOrEmpty() }
+                adapter.updateList(users ?: emptyList())
+            }
+
+            recyclerView.layoutManager = LinearLayoutManager(this)
+            recyclerView.adapter = adapter
+
+            // Filter users on text change
+            searchInput.addTextChangedListener {
+                lifecycleScope.launch {
+                    val users = userApi.getAllByCriteria(
+                        search = it.toString(),
+                        username = "",
+                        email = "",
+                        inChannelId = "",
+                        notInChannelId = "",
+                        onlyFriends = false,
+                        active = null,
+                        page = 0,
+                        size = 20,
+                        sort = "username"
+                    ).body()?._embedded?.get("users")?.filter { user -> !user._links["addFriend"]?.href.isNullOrEmpty() }
+                    adapter.updateList(users ?: emptyList())
+                }
+            }
 
             dialog.show()
         }
