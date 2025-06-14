@@ -20,6 +20,7 @@ import kotlinx.coroutines.withContext
 import uni.fmi.masters.talkify.R
 import uni.fmi.masters.talkify.model.channel.Channel
 import uni.fmi.masters.talkify.model.channel.ChannelCreateUpdateRequest
+import uni.fmi.masters.talkify.model.channel.members.AddChannelGuestRequest
 import uni.fmi.masters.talkify.model.message.Message
 import uni.fmi.masters.talkify.model.message.MessageCreateRequest
 import uni.fmi.masters.talkify.model.user.User
@@ -28,6 +29,7 @@ import uni.fmi.masters.talkify.service.adapters.GroupChatsAdapter
 import uni.fmi.masters.talkify.service.adapters.MessageAdapter
 import uni.fmi.masters.talkify.service.adapters.UserSearchAdapter
 import uni.fmi.masters.talkify.service.api.ChannelApi
+import uni.fmi.masters.talkify.service.api.ChannelMemberApi
 import uni.fmi.masters.talkify.service.api.FriendshipApi
 import uni.fmi.masters.talkify.service.api.MessageApi
 import uni.fmi.masters.talkify.service.api.UserApi
@@ -43,6 +45,7 @@ class TalkifyActivity : AppCompatActivity() {
     @Inject lateinit var channelApi: ChannelApi
     @Inject lateinit var messageApi: MessageApi
     @Inject lateinit var friendshipApi: FriendshipApi
+    @Inject lateinit var channelMemberApi: ChannelMemberApi
 
     private lateinit var friendsRecyclerView: RecyclerView
     private lateinit var groupChatsRecyclerView: RecyclerView
@@ -381,6 +384,64 @@ class TalkifyActivity : AppCompatActivity() {
     }
 
     private fun onAddMember(channel: Channel) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_user_search, null)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setTitle("Invite in channel ${channel.name}")
+            .setNegativeButton("Cancel", null)
+            .create()
 
+        val searchInput = dialogView.findViewById<EditText>(R.id.searchInput)
+        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.userRecyclerView)
+
+        val adapter = UserSearchAdapter(emptyList()) { user ->
+            lifecycleScope.launch {
+                if (channelMemberApi.addMember(channel.id, AddChannelGuestRequest(user.id)).code() == 200) {
+                    Toast.makeText(this@TalkifyActivity, "Added ${user.username} in ${channel.name}", Toast.LENGTH_SHORT).show()
+                    loadUsers()
+                    dialog.cancel()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            val users = userApi.getAllByCriteria(
+                search = "",
+                username = "",
+                email = "",
+                inChannelId = "",
+                notInChannelId = channel.id,
+                onlyFriends = true,
+                active = true,
+                page = 0,
+                size = 20,
+                sort = "username"
+            ).body()?._embedded?.get("users")
+            adapter.updateList(users ?: emptyList())
+        }
+
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+
+        // Filter users on text change
+        searchInput.addTextChangedListener {
+            lifecycleScope.launch {
+                val users = userApi.getAllByCriteria(
+                    search = it.toString(),
+                    username = "",
+                    email = "",
+                    inChannelId = "",
+                    notInChannelId = channel.id,
+                    onlyFriends = true,
+                    active = true,
+                    page = 0,
+                    size = 20,
+                    sort = "username"
+                ).body()?._embedded?.get("users")
+                adapter.updateList(users ?: emptyList())
+            }
+        }
+
+        dialog.show()
     }
 }
