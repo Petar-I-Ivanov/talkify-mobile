@@ -5,10 +5,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import uni.fmi.masters.talkify.R
 import uni.fmi.masters.talkify.model.channel.Channel
 
 class GroupChatsAdapter(
     private val channels: List<Channel>,
+    private var selectedChannelId: String?,
     private val onClick: (Channel) -> Unit
 ) : RecyclerView.Adapter<GroupChatsAdapter.GroupChatsViewHolder>() {
 
@@ -29,7 +31,23 @@ class GroupChatsAdapter(
 
         fun bind(channel: Channel) {
             textView.text = channel.name
-            itemView.setOnClickListener { onClick(channel) }
+
+            if (channel.id == selectedChannelId) {
+                itemView.setBackgroundResource(R.drawable.border_selected)
+            } else {
+                itemView.setBackgroundResource(android.R.color.transparent)
+            }
+
+            itemView.setOnClickListener {
+                val previousSelected = selectedChannelId
+                selectedChannelId = channel.id
+
+                notifyItemChanged(adapterPosition)
+                val prevIndex = channels.indexOfFirst { it.id == previousSelected }
+                if (prevIndex != -1) notifyItemChanged(prevIndex)
+
+                onClick(channel)
+            }
         }
     }
 }

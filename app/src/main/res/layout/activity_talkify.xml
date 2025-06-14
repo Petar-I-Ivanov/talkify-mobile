@@ -8,6 +8,31 @@
     tools:context=".activity.TalkifyActivity">
 
     <!-- ScrollView with Fixed 300dp Height -->
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/searchBtn"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Search" />
+
+            <Button
+                android:id="@+id/createChannelBtn"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:text="Create Channel" />
+
+        </LinearLayout>
+    </ScrollView>
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="300dp">
@@ -28,6 +53,7 @@
                 android:layout_width="200dp"
                 android:layout_height="300dp"
                 android:scrollbars="vertical" />
+
         </LinearLayout>
     </ScrollView>
 
@@ -77,4 +103,5 @@
             </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
+
 </LinearLayout>

@@ -1,6 +1,5 @@
 package uni.fmi.masters.talkify.service.api.base
 
-import okhttp3.Cookie
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -8,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
 
-    private const val BASE_URL = "https://9c7b-5-53-198-14.ngrok-free.app"
+    private const val BASE_URL = "https://eba2-5-53-198-14.ngrok-free.app"
     private val cookieManager = CookieManager()
 
     private val retrofit = Retrofit.Builder()

@@ -5,9 +5,11 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +31,9 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class TalkifyActivity : AppCompatActivity() {
 
+    private var selectedChannelId: String? = null
+    private var currentUser: User? = null
+
     @Inject lateinit var userApi: UserApi
     @Inject lateinit var channelApi: ChannelApi
     @Inject lateinit var messageApi: MessageApi
@@ -37,11 +42,9 @@ class TalkifyActivity : AppCompatActivity() {
     private lateinit var groupChatsRecyclerView: RecyclerView
     private lateinit var messagesRecyclerView: RecyclerView
 
-    private val friendsAdapter by lazy { FriendsAdapter(emptyList()) { onUserSelected(it) } }
-    private val groupChatsAdapter by lazy { GroupChatsAdapter(emptyList()) { onChannelSelected(it) } }
-    private val messageAdapter by lazy { MessageAdapter(emptyList()) }
-
-    private var selectedChannelId: String? = null
+    private val friendsAdapter by lazy { FriendsAdapter(emptyList(), selectedChannelId) { onUserSelected(it) } }
+    private val groupChatsAdapter by lazy { GroupChatsAdapter(emptyList(), selectedChannelId) { onChannelSelected(it) } }
+    private val messageAdapter by lazy { MessageAdapter(emptyList(), currentUser) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +67,8 @@ class TalkifyActivity : AppCompatActivity() {
 
         // Fetch and display data for users and channels
         lifecycleScope.launch {
+            currentUser = userApi.getCurrent().body()
+            messageAdapter.updateCurrentUser(currentUser)
             loadUsers()
             loadChannels()
         }
@@ -74,7 +79,7 @@ class TalkifyActivity : AppCompatActivity() {
         if (message.isNotBlank()) {
             lifecycleScope.launch {
                 try {
-                    val test = messageApi.create(MessageCreateRequest(message, selectedChannelId!!))
+                    messageApi.create(MessageCreateRequest(message, selectedChannelId!!))
                     findViewById<EditText>(R.id.messageInput).text.clear()
                     loadMessages(selectedChannelId)
                 } catch (e: Exception) {
@@ -103,7 +108,7 @@ class TalkifyActivity : AppCompatActivity() {
 
             if (response.isSuccessful) {
                 val users = response.body()?._embedded?.get("users") ?: emptyList()
-                val adapter = FriendsAdapter(users) { user ->
+                val adapter = FriendsAdapter(users, selectedChannelId) { user ->
                     onUserSelected(user)
                 }
                 friendsRecyclerView.adapter = adapter
@@ -133,7 +138,7 @@ class TalkifyActivity : AppCompatActivity() {
 
             if (response.isSuccessful) {
                 val channels = response.body()?._embedded?.get("channels") ?: emptyList()
-                val adapter = GroupChatsAdapter(channels) { channel ->
+                val adapter = GroupChatsAdapter(channels, selectedChannelId) { channel ->
                     onChannelSelected(channel)
                 }
                 groupChatsRecyclerView.adapter = adapter

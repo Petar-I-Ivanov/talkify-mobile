@@ -5,10 +5,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import uni.fmi.masters.talkify.R
 import uni.fmi.masters.talkify.model.user.User
 
 class FriendsAdapter(
     private val users: List<User>,
+    private var selectedChannelId: String?,
     private val onClick: (User) -> Unit
 ) : RecyclerView.Adapter<FriendsAdapter.FriendsViewHolder>() {
 
@@ -29,7 +31,23 @@ class FriendsAdapter(
 
         fun bind(user: User) {
             textView.text = user.username
-            itemView.setOnClickListener { onClick(user) }
+
+            if (user.privateChannelId == selectedChannelId) {
+                itemView.setBackgroundResource(R.drawable.border_selected)
+            } else {
+                itemView.setBackgroundResource(android.R.color.transparent)
+            }
+
+            itemView.setOnClickListener {
+                val previousSelected = selectedChannelId
+                selectedChannelId = user.privateChannelId
+
+                notifyItemChanged(adapterPosition)
+                val prevIndex = users.indexOfFirst { it.privateChannelId == previousSelected }
+                if (prevIndex != -1) notifyItemChanged(prevIndex)
+
+                onClick(user)
+            }
         }
     }
 }
