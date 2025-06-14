@@ -48,7 +48,11 @@ class TalkifyActivity : AppCompatActivity() {
     private lateinit var groupChatsRecyclerView: RecyclerView
     private lateinit var messagesRecyclerView: RecyclerView
 
-    private val friendsAdapter by lazy { FriendsAdapter(emptyList(), selectedChannelId) { onUserSelected(it) } }
+    private val friendsAdapter by lazy { FriendsAdapter(
+        emptyList(),
+        selectedChannelId,
+        onClick = { onUserSelected(it) },
+        onRemoveFriend = { onRemoveFriend(it) }) }
     private val groupChatsAdapter by lazy { GroupChatsAdapter(
         emptyList(),
         selectedChannelId,
@@ -122,9 +126,11 @@ class TalkifyActivity : AppCompatActivity() {
 
             if (response.isSuccessful) {
                 val users = response.body()?._embedded?.get("users") ?: emptyList()
-                val adapter = FriendsAdapter(users, selectedChannelId) { user ->
-                    onUserSelected(user)
-                }
+                val adapter = FriendsAdapter(
+                    users,
+                    selectedChannelId,
+                    onClick = { onUserSelected(it) },
+                    onRemoveFriend = { onRemoveFriend(it) })
                 friendsRecyclerView.adapter = adapter
             } else {
                 // Handle failure (e.g., show a message)
@@ -309,6 +315,13 @@ class TalkifyActivity : AppCompatActivity() {
             }
 
             dialog.show()
+        }
+    }
+
+    private fun onRemoveFriend(user: User) {
+        lifecycleScope.launch {
+            friendshipApi.removeFriend(user.id)
+            loadUsers()
         }
     }
 }

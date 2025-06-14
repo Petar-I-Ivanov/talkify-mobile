@@ -1,8 +1,10 @@
 package uni.fmi.masters.talkify.service.adapters
 
+import android.app.AlertDialog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import uni.fmi.masters.talkify.R
@@ -11,11 +13,13 @@ import uni.fmi.masters.talkify.model.user.User
 class FriendsAdapter(
     private val users: List<User>,
     private var selectedChannelId: String?,
-    private val onClick: (User) -> Unit
+    private val onClick: (User) -> Unit,
+    private val onRemoveFriend: (User) -> Unit
 ) : RecyclerView.Adapter<FriendsAdapter.FriendsViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendsViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_1, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_user_chat, parent, false)
         return FriendsViewHolder(view)
     }
 
@@ -27,16 +31,16 @@ class FriendsAdapter(
     override fun getItemCount(): Int = users.size
 
     inner class FriendsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(android.R.id.text1)
+        private val username: TextView = itemView.findViewById(R.id.username)
+        private val removeFriendIcon: ImageView = itemView.findViewById(R.id.removeFriend)
 
         fun bind(user: User) {
-            textView.text = user.username
+            username.text = user.username
 
-            if (user.privateChannelId == selectedChannelId) {
-                itemView.setBackgroundResource(R.drawable.border_selected)
-            } else {
-                itemView.setBackgroundResource(android.R.color.transparent)
-            }
+            itemView.setBackgroundResource(
+                if (user.privateChannelId == selectedChannelId) R.drawable.border_selected
+                else android.R.color.transparent
+            )
 
             itemView.setOnClickListener {
                 val previousSelected = selectedChannelId
@@ -47,6 +51,21 @@ class FriendsAdapter(
                 if (prevIndex != -1) notifyItemChanged(prevIndex)
 
                 onClick(user)
+            }
+
+            removeFriendIcon.setOnClickListener {
+                AlertDialog.Builder(itemView.context)
+                    .setTitle("Remove Friend")
+                    .setMessage("Do you want to remove '${user.username}' from friends?")
+                    .setPositiveButton("Yes") { dialog, _ ->
+                        onRemoveFriend(user)
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("No") { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    .create()
+                    .show()
             }
         }
     }
