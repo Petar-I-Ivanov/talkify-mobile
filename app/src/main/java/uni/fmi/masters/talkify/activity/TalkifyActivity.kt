@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uni.fmi.masters.talkify.R
 import uni.fmi.masters.talkify.model.channel.Channel
+import uni.fmi.masters.talkify.model.channel.ChannelCreateUpdateRequest
 import uni.fmi.masters.talkify.model.message.Message
 import uni.fmi.masters.talkify.model.message.MessageCreateRequest
 import uni.fmi.masters.talkify.model.user.User
@@ -50,6 +52,7 @@ class TalkifyActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_talkify)
         findViewById<Button>(R.id.sendButton).setOnClickListener { sendMessage() }
+        loadChannelCreateBtn()
 
         // Initialize RecyclerViews
         friendsRecyclerView = findViewById(R.id.friendsRecyclerView)
@@ -189,5 +192,45 @@ class TalkifyActivity : AppCompatActivity() {
     private fun onChannelSelected(channel: Channel) {
         selectedChannelId = channel.id
         loadMessages(channel.id)
+    }
+
+    private fun loadChannelCreateBtn() {
+        val createChannelBtn = findViewById<Button>(R.id.createChannelBtn)
+        createChannelBtn.setOnClickListener {
+            // Inflate the dialog layout
+            val dialogView = layoutInflater.inflate(R.layout.dialog_create_channel, null)
+            val inputField = dialogView.findViewById<EditText>(R.id.channelNameInput)
+
+            val dialog = AlertDialog.Builder(this)
+                .setTitle("Create Channel")
+                .setView(dialogView)
+                .setPositiveButton("Create") { _, _ ->
+                    val channelName = inputField.text.toString().trim()
+                    if (channelName.isNotEmpty()) {
+                        lifecycleScope.launch {
+                            if (channelApi.create(ChannelCreateUpdateRequest(channelName)).body()?.id != null) {
+                                loadChannels()
+                                Toast.makeText(
+                                    this@TalkifyActivity,
+                                    "Channel '$channelName' created!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    this@TalkifyActivity,
+                                    "Channel with this name already exists!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(this, "Channel name can't be empty.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .create()
+
+            dialog.show()
+        }
     }
 }
